@@ -83,7 +83,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     if (!rowId) return;
     const { error } = await supabase
       .from("master_resume")
-      .update({ data: r as unknown as Record<string, unknown> })
+      .update({ data: r as never })
       .eq("id", rowId);
     if (error) throw error;
   };
