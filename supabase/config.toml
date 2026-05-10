@@ -1,1 +1,7 @@
 project_id = "luwvydedwzjuekwfjxih"
+
+[functions.tailor-resume]
+verify_jwt = false
+
+[functions.update-section]
+verify_jwt = false
