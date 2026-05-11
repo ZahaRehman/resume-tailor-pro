@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import { useResume } from "@/context/ResumeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeTemplate } from "./ResumeTemplate";
 import { toast } from "sonner";
 import { Loader2, Download } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export function PreviewTab() {
   const {
