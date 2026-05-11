@@ -47,7 +47,7 @@ export function PreviewTab() {
     }
   };
 
-  const onDownload = () => {
+  const onPrint = () => {
     if (!current) return;
     const html = buildPrintHtml(current);
     const w = window.open("", "_blank", "width=900,height=1200");
@@ -58,6 +58,77 @@ export function PreviewTab() {
     w.document.open();
     w.document.write(html);
     w.document.close();
+  };
+
+  const onDownloadPdf = async () => {
+    if (!current) return;
+    setIsDownloading(true);
+    // Render the resume into an offscreen container so styles match preview exactly
+    const host = document.createElement("div");
+    host.style.position = "fixed";
+    host.style.left = "-10000px";
+    host.style.top = "0";
+    host.style.width = "8.5in";
+    host.style.background = "#fff";
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await new Promise<void>((resolve) => {
+        root.render(<ResumeTemplate resume={current} printMode />);
+        // Wait for paint
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
+      const target = host.firstElementChild as HTMLElement;
+      const canvas = await html2canvas(target, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        windowWidth: target.scrollWidth,
+      });
+
+      const pdf = new jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+      if (imgH <= pageH) {
+        pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
+      } else {
+        // Multi-page: slice the canvas vertically per page height
+        const pxPerPt = canvas.width / pageW;
+        const pageHeightPx = pageH * pxPerPt;
+        let renderedPx = 0;
+        const pageCanvas = document.createElement("canvas");
+        const ctx = pageCanvas.getContext("2d")!;
+        pageCanvas.width = canvas.width;
+        while (renderedPx < canvas.height) {
+          const sliceH = Math.min(pageHeightPx, canvas.height - renderedPx);
+          pageCanvas.height = sliceH;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+          const sliceData = pageCanvas.toDataURL("image/jpeg", 0.95);
+          if (renderedPx > 0) pdf.addPage();
+          pdf.addImage(sliceData, "JPEG", 0, 0, pageW, (sliceH * pageW) / canvas.width);
+          renderedPx += sliceH;
+        }
+      }
+
+      const fname = `${(current.name || "resume").replace(/\s+/g, "_")}_${activeView}.pdf`;
+      pdf.save(fname);
+      toast.success("PDF downloaded ✓");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate PDF");
+    } finally {
+      root.unmount();
+      host.remove();
+      setIsDownloading(false);
+    }
   };
 
   return (
