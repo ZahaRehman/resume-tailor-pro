@@ -184,14 +184,23 @@ export function PreviewTab() {
           </button>
         </div>
 
-        <button
-          onClick={onDownload}
-          disabled={!current}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          Download PDF
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={onDownloadPdf}
+            disabled={!current || isDownloading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {isDownloading ? "Generating PDF…" : "Download PDF"}
+          </button>
+          <button
+            onClick={onPrint}
+            disabled={!current}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+          >
+            Print / Save via browser
+          </button>
+        </div>
       </aside>
 
       <div className="overflow-auto rounded-lg border border-border bg-white shadow-sm">
