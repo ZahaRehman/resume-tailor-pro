@@ -17,6 +17,7 @@ export function PreviewTab() {
   } = useResume();
 
   const [instruction, setInstruction] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const current = activeView === "tailored" ? tailoredResume : masterResume;
 
