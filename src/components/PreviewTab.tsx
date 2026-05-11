@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useResume } from "@/context/ResumeContext";
 import { supabase } from "@/integrations/supabase/client";
