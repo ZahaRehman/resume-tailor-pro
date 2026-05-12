@@ -63,58 +63,110 @@ export function PreviewTab() {
   const onDownloadPdf = async () => {
     if (!current) return;
     setIsDownloading(true);
-    // Render the resume into an offscreen container so styles match preview exactly
+    // Render the resume offscreen with no padding; we control margins via jsPDF.
     const host = document.createElement("div");
     host.style.position = "fixed";
     host.style.left = "-10000px";
     host.style.top = "0";
-    host.style.width = "8.5in";
+    host.style.width = "7.5in"; // letter (8.5in) minus 0.5in margin each side
     host.style.background = "#fff";
     document.body.appendChild(host);
     const root = createRoot(host);
     try {
       await new Promise<void>((resolve) => {
-        root.render(<ResumeTemplate resume={current} printMode />);
-        // Wait for paint
+        // printMode=false keeps internal padding off; we wrap with our own padding via host width.
+        root.render(
+          <div style={{ padding: 0, background: "#fff" }}>
+            <ResumeTemplate resume={current} printMode />
+          </div>
+        );
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       });
 
       const target = host.firstElementChild as HTMLElement;
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        windowWidth: target.scrollWidth,
-      });
+      const blocks = Array.from(
+        target.querySelectorAll<HTMLElement>("[data-pdf-block]")
+      );
+      if (blocks.length === 0) throw new Error("No PDF blocks found");
+
+      // Capture every block individually
+      const captured: { canvas: HTMLCanvasElement; keepWithNext: boolean }[] = [];
+      for (const el of blocks) {
+        const c = await html2canvas(el, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          windowWidth: el.scrollWidth,
+        });
+        captured.push({
+          canvas: c,
+          keepWithNext: el.getAttribute("data-pdf-keep-with-next") === "1",
+        });
+      }
 
       const pdf = new jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
+      const margin = 36; // 0.5in
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - margin * 2;
+      const blockGap = 2;
 
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      let cursorY = margin;
 
-      if (imgH <= pageH) {
-        pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
-      } else {
-        // Multi-page: slice the canvas vertically per page height
-        const pxPerPt = canvas.width / pageW;
-        const pageHeightPx = pageH * pxPerPt;
-        let renderedPx = 0;
-        const pageCanvas = document.createElement("canvas");
-        const ctx = pageCanvas.getContext("2d")!;
-        pageCanvas.width = canvas.width;
-        while (renderedPx < canvas.height) {
-          const sliceH = Math.min(pageHeightPx, canvas.height - renderedPx);
-          pageCanvas.height = sliceH;
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-          const sliceData = pageCanvas.toDataURL("image/jpeg", 0.95);
-          if (renderedPx > 0) pdf.addPage();
-          pdf.addImage(sliceData, "JPEG", 0, 0, pageW, (sliceH * pageW) / canvas.width);
-          renderedPx += sliceH;
+      const heightOf = (c: HTMLCanvasElement) => (c.height * contentW) / c.width;
+
+      for (let i = 0; i < captured.length; i++) {
+        const { canvas, keepWithNext } = captured[i];
+        const h = heightOf(canvas);
+
+        // Group with next block(s) if keepWithNext: ensure heading + first item fit together
+        let groupHeight = h;
+        let j = i;
+        while (captured[j].keepWithNext && j + 1 < captured.length) {
+          j++;
+          groupHeight += heightOf(captured[j].canvas) + blockGap;
+        }
+
+        const remaining = pageH - margin - cursorY;
+        if (groupHeight > remaining && cursorY > margin) {
+          pdf.addPage();
+          cursorY = margin;
+        }
+
+        // If a single block is taller than a full page, slice it across pages.
+        if (h > contentH) {
+          const pxPerPt = canvas.width / contentW;
+          const pageHeightPx = (pageH - margin - cursorY) * pxPerPt;
+          let renderedPx = 0;
+          let firstSlice = true;
+          const slice = document.createElement("canvas");
+          const ctx = slice.getContext("2d")!;
+          slice.width = canvas.width;
+          while (renderedPx < canvas.height) {
+            const availPt = firstSlice ? pageH - margin - cursorY : contentH;
+            const availPx = Math.floor(availPt * pxPerPt);
+            const sliceH = Math.min(availPx, canvas.height - renderedPx);
+            slice.height = sliceH;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, slice.width, slice.height);
+            ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+            const data = slice.toDataURL("image/jpeg", 0.95);
+            const drawH = (sliceH * contentW) / canvas.width;
+            pdf.addImage(data, "JPEG", margin, firstSlice ? cursorY : margin, contentW, drawH);
+            renderedPx += sliceH;
+            if (renderedPx < canvas.height) {
+              pdf.addPage();
+              cursorY = margin;
+              firstSlice = false;
+            } else {
+              cursorY = (firstSlice ? cursorY : margin) + drawH + blockGap;
+            }
+          }
+        } else {
+          const data = canvas.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(data, "JPEG", margin, cursorY, contentW, h);
+          cursorY += h + blockGap;
         }
       }
 
