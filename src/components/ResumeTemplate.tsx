@@ -27,6 +27,22 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
+// A wrapper that marks a logical block for PDF pagination.
+// `keepWithNext` tells the PDF generator to ensure the following block fits on the same page (avoids orphan headings).
+function Block({
+  children,
+  keepWithNext = false,
+}: {
+  children: React.ReactNode;
+  keepWithNext?: boolean;
+}) {
+  return (
+    <div data-pdf-block="1" data-pdf-keep-with-next={keepWithNext ? "1" : "0"}>
+      {children}
+    </div>
+  );
+}
+
 export function ResumeTemplate({ resume, printMode = false }: Props) {
   const wrapperStyle: React.CSSProperties = {
     fontFamily: "Calibri, Arial, sans-serif",
@@ -43,141 +59,161 @@ export function ResumeTemplate({ resume, printMode = false }: Props) {
 
   return (
     <div style={wrapperStyle} className="resume-template">
-      {/* Name */}
-      <h1
-        style={{
-          textAlign: "center",
-          fontSize: 22,
-          fontWeight: 700,
-          letterSpacing: "1px",
-          textTransform: "uppercase",
-          margin: "0 0 8px 0",
-          color: "#000",
-        }}
-      >
-        {resume.name}
-      </h1>
-
-      {/* Contact table */}
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
-        <tbody>
-          <tr>
-            <td style={{ width: "33%", textAlign: "left", padding: "1px 0" }}>{resume.contact.location}</td>
-            <td style={{ width: "34%", textAlign: "center", padding: "1px 0" }}>
-              LinkedIn:{" "}
-              <a href={`https://${resume.contact.linkedin}`} style={linkStyle}>
-                {resume.contact.linkedin}
-              </a>
-            </td>
-            <td style={{ width: "33%", textAlign: "right", padding: "1px 0" }}></td>
-          </tr>
-          <tr>
-            <td style={{ textAlign: "left", padding: "1px 0" }}>Contact: {resume.contact.phone}</td>
-            <td style={{ textAlign: "center", padding: "1px 0" }}>
-              GitHub:{" "}
-              <a href={`https://${resume.contact.github}`} style={linkStyle}>
-                {resume.contact.github}
-              </a>
-            </td>
-            <td style={{ textAlign: "right", padding: "1px 0" }}>
-              Email:{" "}
-              <a href={`mailto:${resume.contact.email}`} style={linkStyle}>
-                {resume.contact.email}
-              </a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div style={{ borderTop: "1.5px solid #000", marginTop: 4 }} />
+      {/* Header block: name + contact + divider */}
+      <Block>
+        <h1
+          style={{
+            textAlign: "center",
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
+            margin: "0 0 8px 0",
+            color: "#000",
+          }}
+        >
+          {resume.name}
+        </h1>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+          <tbody>
+            <tr>
+              <td style={{ width: "33%", textAlign: "left", padding: "1px 0" }}>{resume.contact.location}</td>
+              <td style={{ width: "34%", textAlign: "center", padding: "1px 0" }}>
+                LinkedIn:{" "}
+                <a href={`https://${resume.contact.linkedin}`} style={linkStyle}>
+                  {resume.contact.linkedin}
+                </a>
+              </td>
+              <td style={{ width: "33%", textAlign: "right", padding: "1px 0" }}></td>
+            </tr>
+            <tr>
+              <td style={{ textAlign: "left", padding: "1px 0" }}>Contact: {resume.contact.phone}</td>
+              <td style={{ textAlign: "center", padding: "1px 0" }}>
+                GitHub:{" "}
+                <a href={`https://${resume.contact.github}`} style={linkStyle}>
+                  {resume.contact.github}
+                </a>
+              </td>
+              <td style={{ textAlign: "right", padding: "1px 0" }}>
+                Email:{" "}
+                <a href={`mailto:${resume.contact.email}`} style={linkStyle}>
+                  {resume.contact.email}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{ borderTop: "1.5px solid #000", marginTop: 4 }} />
+      </Block>
 
       {/* Summary */}
-      <SectionHeading>Professional Summary</SectionHeading>
-      <p style={{ margin: 0 }}>{resume.summary}</p>
+      <Block>
+        <SectionHeading>Professional Summary</SectionHeading>
+        <p style={{ margin: 0 }}>{resume.summary}</p>
+      </Block>
 
       {/* Skills */}
-      <SectionHeading>Key Skills</SectionHeading>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <tbody>
-          {Array.from({ length: Math.ceil(resume.skills.length / 4) }).map((_, rowIdx) => (
-            <tr key={rowIdx}>
-              {[0, 1, 2, 3].map((c) => {
-                const skill = resume.skills[rowIdx * 4 + c];
-                return (
-                  <td key={c} style={{ width: "25%", padding: "2px 4px", verticalAlign: "top" }}>
-                    {skill ? (
-                      <>
-                        <span style={{ marginRight: 6 }}>●</span>
-                        {skill}
-                      </>
-                    ) : null}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Experience */}
-      <SectionHeading>Professional Experience</SectionHeading>
-      {resume.experience.map((exp, i) => (
-        <div key={i} style={{ marginBottom: 8 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <tbody>
-              <tr>
-                <td style={{ fontSize: 11.5, fontWeight: 700, color: "#000" }}>{exp.role}</td>
-                <td style={{ fontSize: 10.5, fontStyle: "italic", textAlign: "right" }}>{exp.duration}</td>
+      <Block>
+        <SectionHeading>Key Skills</SectionHeading>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {Array.from({ length: Math.ceil(resume.skills.length / 4) }).map((_, rowIdx) => (
+              <tr key={rowIdx}>
+                {[0, 1, 2, 3].map((c) => {
+                  const skill = resume.skills[rowIdx * 4 + c];
+                  return (
+                    <td key={c} style={{ width: "25%", padding: "2px 4px", verticalAlign: "top" }}>
+                      {skill ? (
+                        <>
+                          <span style={{ marginRight: 6 }}>●</span>
+                          {skill}
+                        </>
+                      ) : null}
+                    </td>
+                  );
+                })}
               </tr>
-            </tbody>
-          </table>
-          <div style={{ fontSize: 10.8, fontStyle: "italic" }}>{exp.company}</div>
-          <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
-            {exp.bullets.map((b, j) => (
-              <li key={j} style={{ marginBottom: 2 }}>{b}</li>
             ))}
-          </ul>
-        </div>
+          </tbody>
+        </table>
+      </Block>
+
+      {/* Experience: heading kept with first entry, subsequent entries are independent blocks */}
+      <Block keepWithNext>
+        <SectionHeading>Professional Experience</SectionHeading>
+      </Block>
+      {resume.experience.map((exp, i) => (
+        <Block key={i}>
+          <div style={{ marginBottom: 8 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                <tr>
+                  <td style={{ fontSize: 11.5, fontWeight: 700, color: "#000" }}>{exp.role}</td>
+                  <td style={{ fontSize: 10.5, fontStyle: "italic", textAlign: "right" }}>{exp.duration}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ fontSize: 10.8, fontStyle: "italic" }}>{exp.company}</div>
+            <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
+              {exp.bullets.map((b, j) => (
+                <li key={j} style={{ marginBottom: 2 }}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        </Block>
       ))}
 
       {/* Projects */}
-      <SectionHeading>Projects</SectionHeading>
+      <Block keepWithNext>
+        <SectionHeading>Projects</SectionHeading>
+      </Block>
       {resume.projects.map((p, i) => (
-        <div key={i} style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: "#000" }}>{p.name}</div>
-          <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
-            {p.bullets.map((b, j) => (
-              <li key={j} style={{ marginBottom: 2 }}>{b}</li>
-            ))}
-          </ul>
-        </div>
+        <Block key={i}>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#000" }}>{p.name}</div>
+            <ul style={{ margin: "4px 0 0 0", paddingLeft: 20 }}>
+              {p.bullets.map((b, j) => (
+                <li key={j} style={{ marginBottom: 2 }}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        </Block>
       ))}
 
       {/* Education */}
-      <SectionHeading>Education</SectionHeading>
+      <Block keepWithNext>
+        <SectionHeading>Education</SectionHeading>
+      </Block>
       {resume.education.map((e, i) => (
-        <div key={i} style={{ marginBottom: 6 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <tbody>
-              <tr>
-                <td style={{ fontWeight: 700, color: "#000" }}>{e.institution}</td>
-                <td style={{ fontStyle: "italic", textAlign: "right" }}>{e.duration}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div style={{ fontStyle: "italic" }}>
-            {e.degree}
-            {e.gpa ? ` — CGPA: ${e.gpa}` : ""}
+        <Block key={i}>
+          <div style={{ marginBottom: 6 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                <tr>
+                  <td style={{ fontWeight: 700, color: "#000" }}>{e.institution}</td>
+                  <td style={{ fontStyle: "italic", textAlign: "right" }}>{e.duration}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ fontStyle: "italic" }}>
+              {e.degree}
+              {e.gpa ? ` — CGPA: ${e.gpa}` : ""}
+            </div>
           </div>
-        </div>
+        </Block>
       ))}
 
       {/* Additional Skills */}
-      <SectionHeading>Additional Skills &amp; Strengths</SectionHeading>
+      <Block keepWithNext>
+        <SectionHeading>Additional Skills &amp; Strengths</SectionHeading>
+      </Block>
       {resume.additionalSkills.map((a, i) => (
-        <div key={i} style={{ marginBottom: 6 }}>
-          <div style={{ fontWeight: 700, color: "#000" }}>{a.title}</div>
-          <div>{a.description}</div>
-        </div>
+        <Block key={i}>
+          <div style={{ marginBottom: 6 }}>
+            <div style={{ fontWeight: 700, color: "#000" }}>{a.title}</div>
+            <div>{a.description}</div>
+          </div>
+        </Block>
       ))}
     </div>
   );
