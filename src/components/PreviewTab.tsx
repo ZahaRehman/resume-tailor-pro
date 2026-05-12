@@ -6,7 +6,7 @@ import { ResumeTemplate } from "./ResumeTemplate";
 import { toast } from "sonner";
 import { Loader2, Download } from "lucide-react";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 
 export function PreviewTab() {
   const {
