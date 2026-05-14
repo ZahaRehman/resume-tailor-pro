@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { useResume } from "@/context/ResumeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeTemplate } from "./ResumeTemplate";
+import { EditableResumeView } from "./EditableResumeView";
 import { toast } from "sonner";
 import { Loader2, Download } from "lucide-react";
 import jsPDF from "jspdf";
