@@ -80,6 +80,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AI Resume Builder" },
+      { name: "twitter:description", content: "Tailor your resume to any job description with AI." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/776eee54-6940-4f64-bffa-5da358cbd351/id-preview-f1134a72--b7280a7a-17d2-4ff4-8905-3cc11d6c0fa1.lovable.app-1778597479404.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/776eee54-6940-4f64-bffa-5da358cbd351/id-preview-f1134a72--b7280a7a-17d2-4ff4-8905-3cc11d6c0fa1.lovable.app-1778597479404.png" },
     ],
     links: [
       {
