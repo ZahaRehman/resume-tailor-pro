@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { useResume } from "@/context/ResumeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ResumeTemplate } from "./ResumeTemplate";
+import { EditableResumeView } from "./EditableResumeView";
 import { toast } from "sonner";
 import { Loader2, Download } from "lucide-react";
 import jsPDF from "jspdf";
@@ -257,7 +258,24 @@ export function PreviewTab() {
 
       <div className="overflow-auto rounded-lg border border-border bg-white shadow-sm">
         {current ? (
-          <ResumeTemplate resume={current} />
+          <EditableResumeView
+            resume={current}
+            onSave={async (updated) => {
+              try {
+                if (activeView === "tailored") {
+                  setTailoredResume(updated);
+                } else {
+                  setMasterResume(updated);
+                  await saveMaster(updated);
+                }
+                toast.success("Saved ✓");
+              } catch (e) {
+                console.error(e);
+                toast.error("Failed to save changes");
+                throw e;
+              }
+            }}
+          />
         ) : (
           <div className="p-12 text-center text-sm text-muted-foreground">No resume loaded.</div>
         )}
