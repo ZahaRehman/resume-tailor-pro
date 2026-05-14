@@ -258,7 +258,24 @@ export function PreviewTab() {
 
       <div className="overflow-auto rounded-lg border border-border bg-white shadow-sm">
         {current ? (
-          <ResumeTemplate resume={current} />
+          <EditableResumeView
+            resume={current}
+            onSave={async (updated) => {
+              try {
+                if (activeView === "tailored") {
+                  setTailoredResume(updated);
+                } else {
+                  setMasterResume(updated);
+                  await saveMaster(updated);
+                }
+                toast.success("Saved ✓");
+              } catch (e) {
+                console.error(e);
+                toast.error("Failed to save changes");
+                throw e;
+              }
+            }}
+          />
         ) : (
           <div className="p-12 text-center text-sm text-muted-foreground">No resume loaded.</div>
         )}
