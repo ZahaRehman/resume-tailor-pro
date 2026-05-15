@@ -80,12 +80,21 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   }, [reloadTick]);
 
   const saveMaster = async (r: ResumeData) => {
-    if (!rowId) return;
-    const { error } = await supabase
-      .from("master_resume")
-      .update({ data: r as never })
-      .eq("id", rowId);
-    if (error) throw error;
+    if (rowId) {
+      const { error } = await supabase
+        .from("master_resume")
+        .update({ data: r as never })
+        .eq("id", rowId);
+      if (error) throw error;
+    } else {
+      const { data, error } = await supabase
+        .from("master_resume")
+        .insert({ data: r as never })
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (data) setRowId(data.id);
+    }
   };
 
   const value: Ctx = {
