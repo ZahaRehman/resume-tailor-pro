@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { supabase } from "@/integrations/supabase/client";
 import type { ResumeData } from "@/types/resume";
 
-type ActiveTab = "master" | "tailor" | "preview";
+type ActiveTab = "upload" | "master" | "tailor" | "preview";
 type ActiveView = "master" | "tailored";
 
 type Ctx = {
