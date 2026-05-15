@@ -1,0 +1,1 @@
+ALTER TABLE public.master_resume ADD COLUMN IF NOT EXISTS layout jsonb;
