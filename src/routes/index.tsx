@@ -72,6 +72,8 @@ function App() {
           <div className="flex h-[60vh] items-center justify-center text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading resume…
           </div>
+        ) : activeTab === "upload" ? (
+          <UploadTab />
         ) : activeTab === "master" ? (
           <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
             <div className="rounded-lg border border-border bg-white p-1">
