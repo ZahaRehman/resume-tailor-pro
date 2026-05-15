@@ -4,8 +4,9 @@ import { JsonEditor } from "@/components/JsonEditor";
 import { StructurePreview } from "@/components/StructurePreview";
 import { TailorTab } from "@/components/TailorTab";
 import { PreviewTab } from "@/components/PreviewTab";
+import { UploadTab } from "@/components/UploadTab";
 import { Toaster } from "@/components/ui/sonner";
-import { FileText, Sparkles, Eye, AlertCircle, Loader2 } from "lucide-react";
+import { FileText, Sparkles, Eye, AlertCircle, Loader2, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: () => (
@@ -20,6 +21,7 @@ function App() {
   const { activeTab, setActiveTab, loading, loadError, reload, masterResume } = useResume();
 
   const tabs = [
+    { id: "upload" as const, label: "Upload", Icon: Upload },
     { id: "master" as const, label: "Master Resume", Icon: FileText },
     { id: "tailor" as const, label: "Tailor", Icon: Sparkles },
     { id: "preview" as const, label: "Preview & Download", Icon: Eye },
@@ -70,6 +72,8 @@ function App() {
           <div className="flex h-[60vh] items-center justify-center text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading resume…
           </div>
+        ) : activeTab === "upload" ? (
+          <UploadTab />
         ) : activeTab === "master" ? (
           <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
             <div className="rounded-lg border border-border bg-white p-1">
