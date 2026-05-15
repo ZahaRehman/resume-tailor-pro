@@ -106,9 +106,7 @@ export async function extractFromPdf(file: File): Promise<ExtractionResult> {
 
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
-    const textContent = await page.getContent
-      ? await (page as any).getContent() // TS guard
-      : await page.getTextContent();
+    const textContent = await page.getTextContent();
     // Group items by approximate y line.
     const items = (textContent.items as any[]).filter((it) => "str" in it);
     const lineMap = new Map<number, { text: string; size: number; x: number }[]>();
