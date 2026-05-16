@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
+import { withDefaults, formatHeadingText, fontStack } from "@/lib/resumeLayout";
 
 export function PreviewTab() {
   const {
