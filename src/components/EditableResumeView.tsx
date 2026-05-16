@@ -2,36 +2,38 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
 import type {
   ResumeData,
+  ResumeLayout,
+  SectionKey,
   ExperienceEntry,
   ProjectEntry,
   EducationEntry,
   AdditionalSkillEntry,
 } from "@/types/resume";
+import {
+  DEFAULT_LAYOUT,
+  SECTION_TITLES,
+  fontStack,
+  formatHeadingText,
+  headingCss,
+  withDefaults,
+} from "@/lib/resumeLayout";
 
 type Props = {
   resume: ResumeData;
+  layout?: ResumeLayout | null;
   onSave: (updated: ResumeData) => Promise<void> | void;
 };
 
 const linkStyle: CSSProperties = { color: "#1155cc", textDecoration: "none" };
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      style={{
-        margin: "13px 0 6px 0",
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: "0.5px",
-        textTransform: "uppercase",
-        color: "#000",
-        borderBottom: "1.5px solid #000",
-        paddingBottom: 2,
-      }}
-    >
-      {children}
-    </h2>
-  );
+function SectionHeading({
+  children,
+  layout,
+}: {
+  children: string;
+  layout: Required<ResumeLayout>;
+}) {
+  return <h2 style={headingCss(layout)}>{formatHeadingText(children, layout.headingStyle)}</h2>;
 }
 
 /** Auto-growing textarea that wraps long input cleanly. */
