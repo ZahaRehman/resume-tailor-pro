@@ -381,7 +381,7 @@ function buildPrintHtml(
     additionalSkills: `${sec("Additional Skills & Strengths")}${addlHtml}`,
   };
 
-  const orderedSections = L.sectionOrder.map((k) => sectionHtml[k] ?? "").join("\n");
+  const orderedSections = L.sectionOrder.map((k: string) => sectionHtml[k] ?? "").join("\n");
 
   return `<!doctype html>
 <html><head>
