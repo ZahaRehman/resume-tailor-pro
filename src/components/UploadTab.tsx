@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useResume } from "@/context/ResumeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { extractResumeFile } from "@/lib/parsers/extractResume";
-import type { ResumeData } from "@/types/resume";
+import type { ResumeData, ResumeLayout } from "@/types/resume";
 import { toast } from "sonner";
 import { Upload, FileText, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -13,7 +13,7 @@ const STAGES = [
 ];
 
 export function UploadTab() {
-  const { setMasterResume, saveMaster, setActiveTab, setActiveView } = useResume();
+  const { setMasterResume, setMasterLayout, saveMaster, setActiveTab, setActiveView } = useResume();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState(0);
@@ -39,15 +39,17 @@ export function UploadTab() {
       });
       if (error) throw error;
       const resume: ResumeData | undefined = data?.resume;
+      const layout: ResumeLayout | undefined = data?.layout;
       if (!resume || !resume.name) {
         throw new Error("AI couldn't structure that resume. Try a cleaner copy.");
       }
 
       setStage(2);
 
-      // 3) Persist + activate
+      // 3) Persist + activate — keep the layout the AI inferred from the file
       setMasterResume(resume);
-      await saveMaster(resume);
+      setMasterLayout(layout ?? null);
+      await saveMaster(resume, layout ?? null);
 
       toast.success("Resume imported ✓");
       setActiveView("master");
