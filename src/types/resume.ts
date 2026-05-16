@@ -40,3 +40,21 @@ export type ResumeData = {
   education: EducationEntry[];
   additionalSkills: AdditionalSkillEntry[];
 };
+
+export type SectionKey =
+  | "summary"
+  | "skills"
+  | "experience"
+  | "projects"
+  | "education"
+  | "additionalSkills";
+
+export type ResumeLayout = {
+  sectionOrder?: SectionKey[];
+  headingStyle?: "uppercase" | "title" | "smallcaps";
+  headingUnderline?: boolean;
+  accentColor?: string;
+  fontFamily?: "serif" | "sans";
+  columns?: 1 | 2;
+  bulletChar?: string;
+};
