@@ -287,12 +287,20 @@ export function PreviewTab() {
   );
 }
 
-function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
+function buildPrintHtml(
+  resume: import("@/types/resume").ResumeData,
+  rawLayout?: import("@/types/resume").ResumeLayout | null,
+): string {
+  const L = withDefaults(rawLayout);
   const linkS = 'style="color:#1155cc;text-decoration:none"';
+  const headingTransform = L.headingStyle === "uppercase" ? "uppercase" : "none";
+  const headingVariant = L.headingStyle === "smallcaps" ? "small-caps" : "normal";
+  const underline = L.headingUnderline ? `border-bottom:1.5px solid ${L.accentColor};padding-bottom:2px;` : "";
   const sec = (t: string) =>
-    `<h2 style="margin:13px 0 6px 0;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#000;border-bottom:1.5px solid #000;padding-bottom:2px">${t}</h2>`;
+    `<h2 style="margin:13px 0 6px 0;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:${headingTransform};font-variant:${headingVariant};color:${L.accentColor};${underline}">${formatHeadingText(t, L.headingStyle)}</h2>`;
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const bullet = `<span style="color:${L.accentColor};margin-right:6px">${L.bulletChar}</span>`;
 
   const skillsRows = Array.from({ length: Math.ceil(resume.skills.length / 4) })
     .map((_, r) => {
@@ -300,13 +308,21 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
         .map((c) => {
           const s = resume.skills[r * 4 + c];
           return `<td style="width:25%;padding:2px 4px;vertical-align:top">${
-            s ? `<span style="margin-right:6px">●</span>${esc(s)}` : ""
+            s ? `${bullet}${esc(s)}` : ""
           }</td>`;
         })
         .join("");
       return `<tr>${cells}</tr>`;
     })
     .join("");
+
+  const bulletList = (items: string[]) =>
+    `<ul style="margin:4px 0 0 0;padding-left:18px;list-style:none">${items
+      .map(
+        (b) =>
+          `<li style="margin-bottom:2px;position:relative;padding-left:2px"><span style="position:absolute;left:-14px;color:${L.accentColor}">${L.bulletChar}</span>${esc(b)}</li>`,
+      )
+      .join("")}</ul>`;
 
   const expHtml = resume.experience
     .map(
@@ -317,10 +333,8 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
           <td style="font-size:10.5px;font-style:italic;text-align:right">${esc(e.duration)}</td>
         </tr></tbody></table>
         <div style="font-size:10.8px;font-style:italic">${esc(e.company)}</div>
-        <ul style="margin:4px 0 0 0;padding-left:20px">
-          ${e.bullets.map((b) => `<li style="margin-bottom:2px">${esc(b)}</li>`).join("")}
-        </ul>
-      </div>`
+        ${bulletList(e.bullets)}
+      </div>`,
     )
     .join("");
 
@@ -329,10 +343,8 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
       (p) => `
       <div style="margin-bottom:8px">
         <div style="font-size:11.5px;font-weight:700;color:#000">${esc(p.name)}</div>
-        <ul style="margin:4px 0 0 0;padding-left:20px">
-          ${p.bullets.map((b) => `<li style="margin-bottom:2px">${esc(b)}</li>`).join("")}
-        </ul>
-      </div>`
+        ${bulletList(p.bullets)}
+      </div>`,
     )
     .join("");
 
@@ -345,7 +357,7 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
           <td style="font-style:italic;text-align:right">${esc(e.duration)}</td>
         </tr></tbody></table>
         <div style="font-style:italic">${esc(e.degree)}${e.gpa ? ` — CGPA: ${esc(e.gpa)}` : ""}</div>
-      </div>`
+      </div>`,
     )
     .join("");
 
@@ -355,9 +367,20 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
       <div style="margin-bottom:6px">
         <div style="font-weight:700;color:#000">${esc(a.title)}</div>
         <div>${esc(a.description)}</div>
-      </div>`
+      </div>`,
     )
     .join("");
+
+  const sectionHtml: Record<string, string> = {
+    summary: `${sec("Professional Summary")}<p style="margin:0">${esc(resume.summary)}</p>`,
+    skills: `${sec("Key Skills")}<table style="width:100%;border-collapse:collapse"><tbody>${skillsRows}</tbody></table>`,
+    experience: `${sec("Professional Experience")}${expHtml}`,
+    projects: `${sec("Projects")}${projHtml}`,
+    education: `${sec("Education")}${eduHtml}`,
+    additionalSkills: `${sec("Additional Skills & Strengths")}${addlHtml}`,
+  };
+
+  const orderedSections = L.sectionOrder.map((k) => sectionHtml[k] ?? "").join("\n");
 
   return `<!doctype html>
 <html><head>
@@ -366,51 +389,41 @@ function buildPrintHtml(resume: import("@/types/resume").ResumeData): string {
 <style>
   @page { size: letter; margin: 0.5in; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: Calibri, Arial, sans-serif; font-size: 10.8px; line-height: 1.45; color: #111; }
+  body { font-family: ${fontStack(L.fontFamily)}; font-size: 10.8px; line-height: 1.45; color: #111; }
   a { color: #1155cc; text-decoration: none; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head><body>
-  <h1 style="text-align:center;font-size:22px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 8px 0;color:#000">${esc(
-    resume.name
+  <h1 style="text-align:center;font-size:22px;font-weight:700;letter-spacing:1px;text-transform:${headingTransform};font-variant:${headingVariant};margin:0 0 8px 0;color:${L.accentColor}">${esc(
+    resume.name,
   )}</h1>
   <table style="width:100%;border-collapse:collapse;font-size:10.5px"><tbody>
     <tr>
       <td style="width:33%;text-align:left;padding:1px 0">${esc(resume.contact.location)}</td>
-      <td style="width:34%;text-align:center;padding:1px 0">LinkedIn: <a href="https://${esc(
+      <td style="width:34%;text-align:center;padding:1px 0">${
         resume.contact.linkedin
-      )}" ${linkS}>${esc(resume.contact.linkedin)}</a></td>
+          ? `LinkedIn: <a href="https://${esc(resume.contact.linkedin)}" ${linkS}>${esc(resume.contact.linkedin)}</a>`
+          : ""
+      }</td>
       <td style="width:33%;text-align:right;padding:1px 0"></td>
     </tr>
     <tr>
-      <td style="text-align:left;padding:1px 0">Contact: ${esc(resume.contact.phone)}</td>
-      <td style="text-align:center;padding:1px 0">GitHub: <a href="https://${esc(
+      <td style="text-align:left;padding:1px 0">${resume.contact.phone ? `Contact: ${esc(resume.contact.phone)}` : ""}</td>
+      <td style="text-align:center;padding:1px 0">${
         resume.contact.github
-      )}" ${linkS}>${esc(resume.contact.github)}</a></td>
-      <td style="text-align:right;padding:1px 0">Email: <a href="mailto:${esc(
+          ? `GitHub: <a href="https://${esc(resume.contact.github)}" ${linkS}>${esc(resume.contact.github)}</a>`
+          : ""
+      }</td>
+      <td style="text-align:right;padding:1px 0">${
         resume.contact.email
-      )}" ${linkS}>${esc(resume.contact.email)}</a></td>
+          ? `Email: <a href="mailto:${esc(resume.contact.email)}" ${linkS}>${esc(resume.contact.email)}</a>`
+          : ""
+      }</td>
     </tr>
   </tbody></table>
-  <div style="border-top:1.5px solid #000;margin-top:4px"></div>
+  <div style="border-top:1.5px solid ${L.accentColor};margin-top:4px"></div>
 
-  ${sec("Professional Summary")}
-  <p style="margin:0">${esc(resume.summary)}</p>
-
-  ${sec("Key Skills")}
-  <table style="width:100%;border-collapse:collapse"><tbody>${skillsRows}</tbody></table>
-
-  ${sec("Professional Experience")}
-  ${expHtml}
-
-  ${sec("Projects")}
-  ${projHtml}
-
-  ${sec("Education")}
-  ${eduHtml}
-
-  ${sec("Additional Skills & Strengths")}
-  ${addlHtml}
+  ${orderedSections}
 
   <script>
     window.addEventListener('load', function() {
