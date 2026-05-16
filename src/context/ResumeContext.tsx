@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { ResumeData } from "@/types/resume";
+import type { ResumeData, ResumeLayout } from "@/types/resume";
 
 type ActiveTab = "upload" | "master" | "tailor" | "preview";
 type ActiveView = "master" | "tailored";
@@ -9,9 +9,11 @@ type Ctx = {
   rowId: string | null;
   masterResume: ResumeData | null;
   tailoredResume: ResumeData | null;
+  masterLayout: ResumeLayout | null;
   setMasterResume: (r: ResumeData) => void;
   setTailoredResume: (r: ResumeData | null) => void;
-  saveMaster: (r: ResumeData) => Promise<void>;
+  setMasterLayout: (l: ResumeLayout | null) => void;
+  saveMaster: (r: ResumeData, layout?: ResumeLayout | null) => Promise<void>;
   loading: boolean;
   loadError: string | null;
   reload: () => void;
@@ -33,6 +35,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   const [rowId, setRowId] = useState<string | null>(null);
   const [masterResume, setMasterResume] = useState<ResumeData | null>(null);
   const [tailoredResume, setTailoredResume] = useState<ResumeData | null>(null);
+  const [masterLayout, setMasterLayout] = useState<ResumeLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("master");
@@ -42,7 +45,6 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   const [isUpdatingSection, setIsUpdatingSection] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
 
-  // Persist tailored resume across tabs/reloads (session only)
   useEffect(() => {
     const cached = sessionStorage.getItem("tailoredResume");
     if (cached) {
@@ -60,7 +62,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       setLoadError(null);
       const { data, error } = await supabase
         .from("master_resume")
-        .select("id, data")
+        .select("id, data, layout")
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -73,33 +75,36 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       if (data) {
         setRowId(data.id);
         setMasterResume(data.data as unknown as ResumeData);
+        setMasterLayout((data.layout as unknown as ResumeLayout) ?? null);
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [reloadTick]);
 
-  const saveMaster = async (r: ResumeData) => {
+  const saveMaster = async (r: ResumeData, layout?: ResumeLayout | null) => {
+    const layoutToWrite = layout === undefined ? masterLayout : layout;
     if (rowId) {
       const { error } = await supabase
         .from("master_resume")
-        .update({ data: r as never })
+        .update({ data: r as never, layout: (layoutToWrite ?? null) as never })
         .eq("id", rowId);
       if (error) throw error;
     } else {
       const { data, error } = await supabase
         .from("master_resume")
-        .insert({ data: r as never })
+        .insert({ data: r as never, layout: (layoutToWrite ?? null) as never })
         .select("id")
         .single();
       if (error) throw error;
       if (data) setRowId(data.id);
     }
+    if (layout !== undefined) setMasterLayout(layout);
   };
 
   const value: Ctx = {
-    rowId, masterResume, tailoredResume,
-    setMasterResume, setTailoredResume, saveMaster,
+    rowId, masterResume, tailoredResume, masterLayout,
+    setMasterResume, setTailoredResume, setMasterLayout, saveMaster,
     loading, loadError,
     reload: () => setReloadTick((t) => t + 1),
     activeTab, setActiveTab, activeView, setActiveView,
