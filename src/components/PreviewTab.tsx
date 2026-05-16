@@ -11,7 +11,7 @@ import html2canvas from "html2canvas-pro";
 
 export function PreviewTab() {
   const {
-    masterResume, tailoredResume,
+    masterResume, tailoredResume, masterLayout,
     activeView, setActiveView,
     setTailoredResume, setMasterResume, saveMaster,
     isUpdatingSection, setIsUpdatingSection,
@@ -21,6 +21,8 @@ export function PreviewTab() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const current = activeView === "tailored" ? tailoredResume : masterResume;
+  // Layout is shared — tailoring rewrites content only, not the visual format.
+  const currentLayout = masterLayout;
 
   const onApply = async () => {
     if (!current || !instruction.trim()) return;
@@ -50,7 +52,7 @@ export function PreviewTab() {
 
   const onPrint = () => {
     if (!current) return;
-    const html = buildPrintHtml(current);
+    const html = buildPrintHtml(current, currentLayout);
     const w = window.open("", "_blank", "width=900,height=1200");
     if (!w) {
       toast.error("Popup blocked — please allow popups for this site.");
@@ -78,7 +80,7 @@ export function PreviewTab() {
         // printMode=false keeps internal padding off; we wrap with our own padding via host width.
         root.render(
           <div style={{ padding: 0, background: "#fff" }}>
-            <ResumeTemplate resume={current} printMode />
+            <ResumeTemplate resume={current} layout={currentLayout} printMode />
           </div>
         );
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
@@ -260,6 +262,7 @@ export function PreviewTab() {
         {current ? (
           <EditableResumeView
             resume={current}
+            layout={currentLayout}
             onSave={async (updated) => {
               try {
                 if (activeView === "tailored") {
