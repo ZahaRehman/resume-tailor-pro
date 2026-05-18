@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, GripVertical, EyeOff, Eye } from "lucide-react";
 import type {
   ResumeData,
   ResumeLayout,
@@ -10,6 +10,7 @@ import type {
   AdditionalSkillEntry,
 } from "@/types/resume";
 import {
+  ALL_SECTIONS,
   DEFAULT_LAYOUT,
   SECTION_TITLES,
   fontStack,
@@ -22,6 +23,7 @@ type Props = {
   resume: ResumeData;
   layout?: ResumeLayout | null;
   onSave: (updated: ResumeData) => Promise<void> | void;
+  onLayoutChange?: (next: ResumeLayout) => Promise<void> | void;
 };
 
 const linkStyle: CSSProperties = { color: "#1155cc", textDecoration: "none" };
