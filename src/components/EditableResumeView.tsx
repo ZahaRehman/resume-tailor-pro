@@ -698,7 +698,104 @@ export function EditableResumeView({ resume, layout, onSave, onLayoutChange }: P
         )}
       />
 
-      {(L.sectionOrder ?? DEFAULT_LAYOUT.sectionOrder).map((k) => sections[k])}
+      {order.map((k) => {
+        const isDropTarget = dropTarget === k && dragKey && dragKey !== k;
+        return (
+          <div
+            key={k}
+            onDragOver={(e) => {
+              if (!dragKey || !onLayoutChange) return;
+              e.preventDefault();
+              if (dropTarget !== k) setDropTarget(k);
+            }}
+            onDragLeave={() => {
+              if (dropTarget === k) setDropTarget(null);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragKey) moveSection(dragKey, k);
+              setDragKey(null);
+              setDropTarget(null);
+            }}
+            style={{
+              position: "relative",
+              opacity: dragKey === k ? 0.4 : 1,
+              borderTop: isDropTarget ? "2px solid #6366f1" : "2px solid transparent",
+              transition: "border-color 120ms",
+            }}
+          >
+            {onLayoutChange ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  left: -28,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  opacity: 0.7,
+                }}
+                className="resume-section-controls"
+              >
+                <button
+                  type="button"
+                  draggable
+                  onDragStart={() => setDragKey(k)}
+                  onDragEnd={() => {
+                    setDragKey(null);
+                    setDropTarget(null);
+                  }}
+                  title="Drag to reorder"
+                  style={{
+                    ...btnGhost,
+                    cursor: "grab",
+                    padding: "2px 4px",
+                  }}
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => hideSection(k)}
+                  title="Hide section"
+                  style={{ ...removeBtn, padding: "2px 4px" }}
+                >
+                  <EyeOff className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : null}
+            {sections[k]}
+          </div>
+        );
+      })}
+
+      {onLayoutChange && hidden.length > 0 ? (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 10,
+            border: "1px dashed #d1d5db",
+            borderRadius: 6,
+            background: "#fafafa",
+          }}
+        >
+          <div style={{ ...fieldLabel, paddingTop: 0, marginBottom: 6 }}>
+            Hidden sections
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {hidden.map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => showSection(k)}
+                style={smallAddBtn}
+              >
+                <Eye className="h-3 w-3" /> {SECTION_TITLES[k]}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
