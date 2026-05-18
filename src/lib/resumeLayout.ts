@@ -29,14 +29,20 @@ const VALID_SECTIONS: SectionKey[] = [
 
 export function withDefaults(l?: ResumeLayout | null): Required<ResumeLayout> {
   const merged = { ...DEFAULT_LAYOUT, ...(l ?? {}) };
-  // sanitise sectionOrder: keep only known keys, append any missing at the end
-  const order = (merged.sectionOrder ?? []).filter((k): k is SectionKey =>
-    VALID_SECTIONS.includes(k as SectionKey),
-  );
-  for (const k of VALID_SECTIONS) if (!order.includes(k)) order.push(k);
-  merged.sectionOrder = order;
+  // If sectionOrder was explicitly provided, honor it verbatim (after sanitising
+  // to known keys). This lets users hide sections by removing them from the
+  // order. Only fall back to the full default order when none was provided.
+  if (l && Array.isArray(l.sectionOrder)) {
+    merged.sectionOrder = l.sectionOrder.filter((k): k is SectionKey =>
+      VALID_SECTIONS.includes(k as SectionKey),
+    );
+  } else {
+    merged.sectionOrder = [...DEFAULT_LAYOUT.sectionOrder];
+  }
   return merged;
 }
+
+export const ALL_SECTIONS: SectionKey[] = VALID_SECTIONS;
 
 export function fontStack(f: "serif" | "sans"): string {
   return f === "serif"
