@@ -14,7 +14,7 @@ export function PreviewTab() {
   const {
     masterResume, tailoredResume, masterLayout,
     activeView, setActiveView,
-    setTailoredResume, setMasterResume, saveMaster,
+    setTailoredResume, setMasterResume, setMasterLayout, saveMaster,
     isUpdatingSection, setIsUpdatingSection,
   } = useResume();
 
