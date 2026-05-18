@@ -14,7 +14,7 @@ export function PreviewTab() {
   const {
     masterResume, tailoredResume, masterLayout,
     activeView, setActiveView,
-    setTailoredResume, setMasterResume, saveMaster,
+    setTailoredResume, setMasterResume, setMasterLayout, saveMaster,
     isUpdatingSection, setIsUpdatingSection,
   } = useResume();
 
@@ -277,6 +277,19 @@ export function PreviewTab() {
                 console.error(e);
                 toast.error("Failed to save changes");
                 throw e;
+              }
+            }}
+            onLayoutChange={async (nextLayout) => {
+              try {
+                setMasterLayout(nextLayout);
+                // Persist against the master resume so the layout survives reload,
+                // regardless of whether we're viewing tailored or master.
+                if (masterResume) {
+                  await saveMaster(masterResume, nextLayout);
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Failed to save layout");
               }
             }}
           />
