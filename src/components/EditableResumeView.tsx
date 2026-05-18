@@ -244,8 +244,27 @@ const fieldLabel: CSSProperties = {
   letterSpacing: 0.4,
 };
 
-export function EditableResumeView({ resume, layout, onSave }: Props) {
+export function EditableResumeView({ resume, layout, onSave, onLayoutChange }: Props) {
   const L = withDefaults(layout);
+  const order = L.sectionOrder;
+  const hidden = ALL_SECTIONS.filter((k) => !order.includes(k));
+
+  const [dragKey, setDragKey] = useState<SectionKey | null>(null);
+  const [dropTarget, setDropTarget] = useState<SectionKey | null>(null);
+
+  const updateOrder = (next: SectionKey[]) => {
+    if (!onLayoutChange) return;
+    onLayoutChange({ ...(layout ?? {}), sectionOrder: next });
+  };
+  const hideSection = (k: SectionKey) => updateOrder(order.filter((x) => x !== k));
+  const showSection = (k: SectionKey) => updateOrder([...order, k]);
+  const moveSection = (from: SectionKey, to: SectionKey) => {
+    if (from === to) return;
+    const next = order.filter((k) => k !== from);
+    const idx = next.indexOf(to);
+    next.splice(idx, 0, from);
+    updateOrder(next);
+  };
 
   // Section-scoped commit helpers — each merges the partial into the full resume.
   const commit = async (partial: Partial<ResumeData>) => {
