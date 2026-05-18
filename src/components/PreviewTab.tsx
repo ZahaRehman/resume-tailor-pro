@@ -279,6 +279,19 @@ export function PreviewTab() {
                 throw e;
               }
             }}
+            onLayoutChange={async (nextLayout) => {
+              try {
+                setMasterLayout(nextLayout);
+                // Persist against the master resume so the layout survives reload,
+                // regardless of whether we're viewing tailored or master.
+                if (masterResume) {
+                  await saveMaster(masterResume, nextLayout);
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Failed to save layout");
+              }
+            }}
           />
         ) : (
           <div className="p-12 text-center text-sm text-muted-foreground">No resume loaded.</div>
