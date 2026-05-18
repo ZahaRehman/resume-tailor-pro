@@ -11,7 +11,7 @@ import type {
 } from "@/types/resume";
 import {
   ALL_SECTIONS,
-  DEFAULT_LAYOUT,
+  
   SECTION_TITLES,
   fontStack,
   formatHeadingText,
